@@ -1,0 +1,30 @@
+#!/usr/bin/env koi
+
+let prefix = "/usr/local"
+let name = "koi"
+
+fn all() { koi() }
+
+fn koi() { $(cargo build --release) }
+
+if args.len() > 0 {
+  let action = args[0]
+  let destination = DESTDIR || ''
+
+  if action == 'cinstall' {
+    cargo install --path .
+  } else if action == 'install' {
+    all()
+
+    mkdir -p {destination}{prefix}/bin
+    cp -f target/release/{name} {destination}{prefix}/bin
+    chmod 755 {destination}{prefix}/bin/{name}
+  } else if action == 'uninstall' {
+    rm {destination}{prefix}/bin/{name}
+  } else if action == 'all' {
+    all()
+  }
+} else {
+  koi()
+}
+
