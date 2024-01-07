@@ -18,7 +18,7 @@ mod parser;
 mod token;
 
 fn split_args() -> (Vec<String>, Vec<String>) {
-  if std::env::var("KOIX").is_ok() {
+  if let Ok(mode) = std::env::var("KOIX") {
     let args: Vec<String> = env::args().skip(1).collect();
     let mut input = Vec::new();
     let mut flags = Vec::new();
@@ -32,6 +32,18 @@ fn split_args() -> (Vec<String>, Vec<String>) {
       } else {
         input.push(arg);
       }
+    }
+
+    if mode == "make" {
+      if input.len() == 0 {
+        flags.insert(0, "all".to_string());
+      }
+
+      flags.insert(0, "-f".to_string());
+      flags.insert(0, "./Koifile".to_string());
+      flags.append(&mut input);
+
+      return (flags, vec![]);
     }
 
     (flags, input)
