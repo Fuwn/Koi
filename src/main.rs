@@ -82,7 +82,7 @@ fn main() {
         buffer
     } else {
         fs::read_to_string(matches.value_of("path").unwrap_or("Koifile"))
-            .expect("couldn't read the source file (if you didn't provide a path to a .koi file, then it defaults to ./Kofile")
+            .expect("couldn't read the source file (if you didn't provide a path to a .koi file, then it defaults to ./Koifile")
     };
 
     let lexer = new_lexer(source);
