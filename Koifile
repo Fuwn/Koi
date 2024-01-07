@@ -1,4 +1,8 @@
-#!/usr/bin/env koi
+# This `Koifile` may be used with the `-f` flag, or `koix`.
+#
+# To set up `koix`, create a shell alias like so: `alias koix="KOIX=make koi"`
+#
+# Execute `koix` tasks as you would with GNU Make: `koix fmt`, `koix cinstall`, and so on.
 
 let prefix = "/usr/local"
 let name = "koi"
@@ -7,24 +11,17 @@ fn all() { koi() }
 
 fn koi() { $(cargo build --release) }
 
-if args.len() > 0 {
-  let action = args[0]
-  let destination = DESTDIR || ''
+fn fmt() { $(cargo +nightly fmt) }
 
-  if action == 'cinstall' {
-    cargo install --path .
-  } else if action == 'install' {
-    all()
+fn cinstall() { $(cargo install --path .) }
 
-    mkdir -p {destination}{prefix}/bin
-    cp -f target/release/{name} {destination}{prefix}/bin
-    chmod 755 {destination}{prefix}/bin/{name}
-  } else if action == 'uninstall' {
-    rm {destination}{prefix}/bin/{name}
-  } else if action == 'all' {
-    all()
-  }
-} else {
-  koi()
+fn install() {
+  all()
+
+  mkdir -p {destination}{prefix}/bin
+  cp -f target/release/{name} {destination}{prefix}/bin
+  chmod 755 {destination}{prefix}/bin/{name}
 }
+
+fn uninstall() { $(rm {destination}{prefix}/bin/{name}) }
 
