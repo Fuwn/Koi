@@ -1,74 +1,67 @@
-use crate::token::{Token, TokenKind};
-
-use super::record::RecordingLexer;
+use {
+  super::record::RecordingLexer,
+  crate::token::{Token, TokenKind},
+};
 
 pub struct PeekableLexer {
-    wrapped: RecordingLexer,
+  wrapped: RecordingLexer,
 
-    peeked: Option<Token>,
+  peeked: Option<Token>,
 
-    pub is_new_line: bool,
+  pub is_new_line: bool,
 }
 
 impl PeekableLexer {
-    pub fn new(wrapped: RecordingLexer) -> PeekableLexer {
-        PeekableLexer {
-            wrapped,
+  pub fn new(wrapped: RecordingLexer) -> PeekableLexer {
+    PeekableLexer { wrapped, peeked: None, is_new_line: true }
+  }
 
-            peeked: None,
+  pub fn peek(&mut self) -> Option<&Token> {
+    if self.peeked.is_none() {
+      self.peeked = self.wrapped.next();
 
-            is_new_line: true,
-        }
+      if self.wrapped.is_recording {
+        self.wrapped.record.remove(self.wrapped.record.len() - 1);
+      }
     }
 
-    pub fn peek(&mut self) -> Option<&Token> {
-        if self.peeked.is_none() {
-            self.peeked = self.wrapped.next();
+    self.peeked.as_ref()
+  }
 
-            if self.wrapped.is_recording {
-                self.wrapped.record.remove(self.wrapped.record.len() - 1);
-            }
-        }
-
-        self.peeked.as_ref()
+  pub fn consume_whitespace(&mut self, newlines: bool) {
+    while match self.peek() {
+      Some(Token { kind: TokenKind::Space, .. }) => true,
+      Some(Token { kind: TokenKind::Newline, .. }) if newlines => true,
+      _ => false,
+    } {
+      self.next();
     }
-
-    pub fn consume_whitespace(&mut self, newlines: bool) {
-        while match self.peek() {
-            Some(Token { kind: TokenKind::Space, .. }) => true,
-            Some(Token { kind: TokenKind::Newline, .. }) if newlines => true,
-            _ => false,
-        } {
-            self.next();
-        }
-    }
+  }
 }
 
 impl Iterator for PeekableLexer {
-    type Item = Token;
+  type Item = Token;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let token = if self.peeked.is_some() {
-            if self.wrapped.is_recording {
-                self.wrapped.record.insert(0, (self.peeked.clone().unwrap(), false));
-            }
+  fn next(&mut self) -> Option<Self::Item> {
+    let token = if self.peeked.is_some() {
+      if self.wrapped.is_recording {
+        self.wrapped.record.insert(0, (self.peeked.clone().unwrap(), false));
+      }
 
-            self.peeked.take()
-        } else {
-            self.wrapped.next()
-        };
+      self.peeked.take()
+    } else {
+      self.wrapped.next()
+    };
 
-        self.is_new_line = self.wrapped.is_new_line;
-        token
-    }
+    self.is_new_line = self.wrapped.is_new_line;
+    token
+  }
 }
 
 impl PeekableLexer {
-    pub fn start_recording(&mut self) {
-        self.wrapped.start_recording();
-    }
+  pub fn start_recording(&mut self) { self.wrapped.start_recording(); }
 
-    pub fn stop_recording(&mut self, playback: bool) {
-        self.wrapped.stop_recording(playback);
-    }
+  pub fn stop_recording(&mut self, playback: bool) {
+    self.wrapped.stop_recording(playback);
+  }
 }
